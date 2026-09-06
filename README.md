@@ -110,6 +110,10 @@ bun run codex:doctor
 bun run dev
 ```
 
+A fork without the author's ignored `.env.keys` file is fine: `bun run dev` generates a local
+keypair and `apps/auth-api/.env.dev.local`. Those files stay gitignored. Do not commit them.
+Local login returns the one-time code in the API response (`AUTH_EXPOSE_DEVELOPMENT_CODE`).
+
 `codex:doctor` checks the CLI version, App Server handshake, ChatGPT login, and Computer Use plugin
 without starting a model turn.
 
@@ -135,6 +139,7 @@ Use `bun run dev:seed --dry-run` to inspect the target and fixture counts withou
 | Command | Purpose |
 | --- | --- |
 | `bun run dev` | Start the local Auth API, Signal service, and Electron client with renderer HMR on its app profile. |
+| `bun run env:bootstrap` | Generate ignored local `.env.keys` and `apps/auth-api/.env.dev.local` when the author's key is not present. |
 | `bun run preview` | Preview the built Electron client with the green preview icon. |
 | `bun run dev:api` | Start the TanStack Start API and its local D1 database on `127.0.0.1:3100`. |
 | `bun run api:start` | Build and preview the Cloudflare Worker locally. |

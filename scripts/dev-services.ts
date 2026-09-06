@@ -12,6 +12,7 @@ import {
   removeDevInstanceRecord,
   writeDevInstanceRecord,
 } from "./dev-automation/instance-registry";
+import { developmentAuthEnvFile, developmentKeysFile } from "./development-secrets";
 import { prepareDevelopmentEnvironment } from "./prepare-dev-environment";
 
 const logger = createOpenBotLogger("dev-services");
@@ -96,9 +97,9 @@ export function createDevelopmentServiceSpec(
         "--redact",
         "--strict",
         "-f",
-        join(projectRoot, "apps", "auth-api", ".env.dev"),
+        developmentAuthEnvFile(projectRoot),
         "-fk",
-        join(projectRoot, ".env.keys"),
+        developmentKeysFile(projectRoot),
         "--",
         process.execPath,
         "run",

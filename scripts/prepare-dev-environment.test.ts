@@ -1,7 +1,8 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { hasDevelopmentKeys } from "./development-secrets";
 import {
   assertDevelopmentSecrets,
   assertSupportedBunVersion,
@@ -24,10 +25,29 @@ describe("development environment preparation", () => {
     expect(() => assertSupportedBunVersion(version)).toThrow("OpenBot development requires stable Bun 1.4.0");
   });
 
-  it("fails with an actionable error when worktree secrets were not copied", () => {
+  it("generates contributor secrets after install when worktree keys are missing", () => {
     const root = createTemporaryRoot();
+    const calls: string[][] = [];
+    const run: DevelopmentCommandRunner = (_executable, args) => calls.push(args);
 
-    expect(() => assertDevelopmentSecrets(root)).toThrow("Missing or empty .env.keys");
+    prepareDevelopmentEnvironment({
+      projectRoot: root,
+      executable: "bun",
+      bunVersion: "1.4.0",
+      run,
+      encrypt: ({ keysFile }) => {
+        writeFileSync(keysFile, "DOTENV_PRIVATE_KEY_DEV_LOCAL=generated\n");
+      },
+    });
+
+    expect(hasDevelopmentKeys(root)).toBe(true);
+    expect(readFileSync(join(root, "apps", "auth-api", ".env.dev.local"), "utf8")).toContain(
+      "AUTH_EXPOSE_DEVELOPMENT_CODE",
+    );
+    expect(calls).toEqual([
+      ["install", "--frozen-lockfile"],
+      ["run", "api:migrate:local"],
+    ]);
   });
 
   it("installs dependencies and migrates the local API in order", () => {
@@ -42,6 +62,12 @@ describe("development environment preparation", () => {
       ["install", "--frozen-lockfile"],
       ["run", "api:migrate:local"],
     ]);
+  });
+
+  it("fails with an actionable error when secret generation did not create .env.keys", () => {
+    const root = createTemporaryRoot();
+
+    expect(() => assertDevelopmentSecrets(root)).toThrow("Missing or empty .env.keys");
   });
 });
 

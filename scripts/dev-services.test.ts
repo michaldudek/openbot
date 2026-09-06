@@ -11,6 +11,7 @@ import {
   signalOwnedProcess,
   stopOwnedProcesses,
 } from "./dev-services";
+import { developmentAuthEnvFile } from "./development-secrets";
 
 describe("development service runner", () => {
   it("runs the normal API and app in a stable order", () => {
@@ -37,7 +38,7 @@ describe("development service runner", () => {
   it("builds the local Signal command with the Auth API development keys", () => {
     const spec = createDevelopmentServiceSpec("remote", { REMOTE_SIGNAL_PORT: "3101" });
 
-    expect(spec.args).toContain(`${projectRoot}/apps/auth-api/.env.dev`);
+    expect(spec.args).toContain(developmentAuthEnvFile(projectRoot));
     expect(spec.args).toContain(`${projectRoot}/remote/api`);
     expect(spec.env.REMOTE_SIGNAL_PORT).toBe("3101");
   });

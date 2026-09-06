@@ -13,6 +13,10 @@ private keys stay in the ignored root `.env.keys` file. Dotenvx decrypts the
 selected file only in process memory. The explicit development flag returns the
 code in the API response. It never writes the code to logs.
 
+A checkout without `.env.keys` (a public fork) generates contributor-local secrets
+on `bun run dev`: a new `.env.keys` and gitignored `apps/auth-api/.env.dev.local`.
+Do not commit either file. They cannot decrypt the tracked production ciphertext.
+
 ```bash
 bun run api:migrate:local
 bun run dev:api
@@ -29,7 +33,7 @@ bun run env:validate:dev
 bun run env:validate:prod
 ```
 
-Commit `.env.dev` and `.env.production`. Never commit `.env.keys`.
+Commit `.env.dev` and `.env.production`. Never commit `.env.keys` or `.env.dev.local`.
 
 ## Email delivery
 

@@ -1,10 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { statSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import {
+  type DevelopmentSecretEncryptor,
+  developmentProjectRoot,
+  ensureDevelopmentSecrets,
+  hasDevelopmentKeys,
+} from "./development-secrets";
 
-const scriptsRoot = dirname(fileURLToPath(import.meta.url));
-export const developmentProjectRoot = dirname(scriptsRoot);
+export { developmentProjectRoot };
 
 export type DevelopmentCommandRunner = (
   executable: string,
@@ -15,17 +17,24 @@ export type DevelopmentCommandRunner = (
 export const supportedBunVersion = "1.4.0";
 
 export function prepareDevelopmentEnvironment(
-  input: { projectRoot?: string; executable?: string; bunVersion?: string; run?: DevelopmentCommandRunner } = {},
+  input: {
+    projectRoot?: string;
+    executable?: string;
+    bunVersion?: string;
+    run?: DevelopmentCommandRunner;
+    encrypt?: DevelopmentSecretEncryptor;
+  } = {},
 ): void {
   const projectRoot = input.projectRoot ?? developmentProjectRoot;
   assertSupportedBunVersion(input.bunVersion ?? process.versions.bun ?? "unknown");
-  assertDevelopmentSecrets(projectRoot);
 
   const executable = input.executable ?? process.execPath;
   const run = input.run ?? execDevelopmentCommand;
   const options = { cwd: projectRoot, stdio: "inherit" as const };
 
   run(executable, ["install", "--frozen-lockfile"], options);
+  ensureDevelopmentSecrets(projectRoot, { encrypt: input.encrypt });
+  assertDevelopmentSecrets(projectRoot);
   run(executable, ["run", "api:migrate:local"], options);
 }
 
@@ -38,18 +47,10 @@ export function assertSupportedBunVersion(version: string): void {
 }
 
 export function assertDevelopmentSecrets(projectRoot: string): void {
-  const keyPath = join(projectRoot, ".env.keys");
-  let hasKeys = false;
-  try {
-    hasKeys = statSync(keyPath).isFile() && statSync(keyPath).size > 0;
-  } catch {
-    // The actionable error below is the same for a missing or unreadable key file.
-  }
-  if (!hasKeys) {
-    throw new Error(
-      "Missing or empty .env.keys. Add it to the local checkout so Codex can copy it through .worktreeinclude.",
-    );
-  }
+  if (hasDevelopmentKeys(projectRoot)) return;
+  throw new Error(
+    "Missing or empty .env.keys. Forked checkouts generate one on bun run dev; if this is a worktree, copy it through .worktreeinclude.",
+  );
 }
 
 function execDevelopmentCommand(executable: string, args: string[], options: { cwd: string; stdio: "inherit" }): void {

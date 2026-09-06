@@ -21,6 +21,9 @@ bun run check
 bun run dev
 ```
 
+`bun run dev` generates ignored local Auth API secrets when `.env.keys` is missing, so a public
+fork can run the app without the author's dotenvx key.
+
 The supported toolchain is pinned in `package.json`. Use stable Bun 1.4.0, TypeScript 5.9, Vite 7, and the
 existing Biome configuration. Biome is the only lint and format tool. Do not add a second linter,
 Prettier, a second state library, or a UI kit without first discussing the architectural cost.
