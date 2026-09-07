@@ -63,7 +63,7 @@ function AuthenticatedStack() {
             presentation: "formSheet",
             sheetAllowedDetents: "fitToContents",
             sheetGrabberVisible: true,
-            title: "Add agent",
+            title: "Create an agent",
           }}
         />
         <Stack.Screen
